@@ -12,7 +12,7 @@ import (
 func TestT4GFeed(t *testing.T) {
 	events, err := t4g.Events(context.Background(), nil)
 	require.NoError(t, err)
-	require.Len(t, events, 12)
+	require.Len(t, events, 5*12)
 
 	require.NotEmpty(t, events[0].Title)
 	require.NotEmpty(t, events[0].Image)
