@@ -13,6 +13,6 @@ RUN apk add --no-cache libc6-compat
 
 COPY --from=builder /t4g-feed/bin/t4g-feed /t4g-feed
 
-EXPOSE 5555
+EXPOSE 5656
 
 ENTRYPOINT ["/t4g-feed"]

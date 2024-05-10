@@ -38,5 +38,5 @@ tasks:
       - |
         docker run --rm \
           --name t4g-feed \
-          -p 5555:5555 \
+          -p 5656:5656 \
           arranhs/t4g-feed
