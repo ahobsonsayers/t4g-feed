@@ -4,7 +4,7 @@ info:
   version: 1.0.0
 
 paths:
-  /t4g/{location}:
+  /{location}:
     get:
       operationId: t4g
       summary: Get Tickets for Good Events RSS Feed

@@ -30,7 +30,7 @@ type Error struct {
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Get Tickets for Good Events RSS Feed
-	// (GET /t4g/{location})
+	// (GET /{location})
 	T4g(w http.ResponseWriter, r *http.Request, location string)
 }
 
@@ -39,7 +39,7 @@ type ServerInterface interface {
 type Unimplemented struct{}
 
 // Get Tickets for Good Events RSS Feed
-// (GET /t4g/{location})
+// (GET /{location})
 func (_ Unimplemented) T4g(w http.ResponseWriter, r *http.Request, location string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
@@ -193,7 +193,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/t4g/{location}", wrapper.T4g)
+		r.Get(options.BaseURL+"/{location}", wrapper.T4g)
 	})
 
 	return r
@@ -242,7 +242,7 @@ func (response T4g400JSONResponse) VisitT4gResponse(w http.ResponseWriter) error
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// Get Tickets for Good Events RSS Feed
-	// (GET /t4g/{location})
+	// (GET /{location})
 	T4g(ctx context.Context, request T4gRequestObject) (T4gResponseObject, error)
 }
 
@@ -304,12 +304,12 @@ func (sh *strictHandler) T4g(w http.ResponseWriter, r *http.Request, location st
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/3yRP2/jMAzFv4rBu1GIfddM2jokQbai6RZkUG3aUWqLKqUEDQx994JK3D8p0I2myff4",
-	"fhqhpsGTQxcD6BEYgycXMH8gM7EUNbmILkppvO9tbaIlVx4COemFeo+DkcozeeRob/bj2SNoCJGt6yAl",
-	"BYyvR8vYgN5ex3ZqGqPnA9YRksw1GGq2XuxAwyJP5h/WtZSlbexl6cnWLxhDsSQuVkRNsURsivuHNSg4",
-	"IYeLwL9ZNasgKSCPzngLGu5yS4E3cZ+vLuO8K8eeLiGTtDrM2SVbbq4bcZx3eY3NgBE5gN6OYMVFpECB",
-	"M4NcNimB+gLqlshOfUf/v6p+Af829KDHn3weN5uiRWwk4fyi8JexBQ1/ys93Lj+cSrwCVRCOw2D4DBpW",
-	"GIuJZjvRXJxksxCDZTZIKb0HAAD//5pbnho8AgAA",
+	"H4sIAAAAAAAC/3yRT2/CMAzFv0rl7RjRbuOU2w6AuE1jN8Qha10Ia+PMCWioynefHOj+MGk3x7Xf8/t1",
+	"gJp6Tw5dDKAHYAyeXMD8QGZiKWpyEV2U0njf2dpES67cB3LSC/UOeyOVZ/LI0V7tx5NH0BAiW7eFlBQw",
+	"vh8sYwN6fRnbqHGMXvdYR0gy12Co2XqxAw2zPJk/WNdSlraxk6UXW79hDMWcuFgQNcUcsSken5ag4Igc",
+	"zgJ3k2pSQVJAHp3xFjQ85JYCb+IuX10OHZ0DJnluMeeWXLm5bMRtus0rbHqMyAH0egArDiIDCpzp5apR",
+	"CdQPSNc0Nuo39vuq+gf6R9+BHv6yeV6tihaxkXTTs8ItYwsabsrvf1x+OZV4gakgHPre8Ak0LDAWI8l2",
+	"JDk7ymYhBvNskFL6DAAA//9uNFc7OAIAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
