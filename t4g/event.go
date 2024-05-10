@@ -43,7 +43,7 @@ func (e Event) ToFeedItem() *feeds.Item {
 		Title:       e.Title,
 		Link:        &feeds.Link{Href: e.Link},
 		Description: strings.Join([]string{e.Date, e.Location, e.Category}, "\n"),
-		Enclosure:   &feeds.Enclosure{Url: e.Image, Type: "image/jpeg"},
+		Enclosure:   &feeds.Enclosure{Url: e.Image, Type: "image/jpeg", Length: "0"},
 		Created:     time.Now(),
 		Updated:     time.Now(),
 	}
