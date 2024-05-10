@@ -26,7 +26,7 @@ func (*server) T4g(ctx context.Context, request T4gRequestObject) (T4gResponseOb
 	rssFeedReader := strings.NewReader(rssFeed)
 
 	return T4g200ApplicationxmlResponse{
-		Body:          strings.NewReader(rssFeed),
+		Body:          rssFeedReader,
 		ContentLength: int64(rssFeedReader.Len()),
 	}, nil
 }

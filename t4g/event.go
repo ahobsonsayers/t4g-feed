@@ -29,7 +29,7 @@ func (e Event) sanitise() Event {
 
 	event.Image = strings.ReplaceAll(e.Image, "thumb_", "")
 
-	link := utils.CloneURL(ticketsForGoodEventsUrl)
+	link := utils.CloneURL(ticketsForGoodUrl)
 	link.Path = e.Link
 	event.Link = link.String()
 
