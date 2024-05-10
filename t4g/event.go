@@ -46,7 +46,7 @@ func (e Event) ToFeedItem() *feeds.Item {
 	return &feeds.Item{
 		Title:       e.Title,
 		Link:        &feeds.Link{Href: e.Link},
-		Description: fmt.Sprintf("%s\n%s\n%s", e.Date, e.Location, e.Category),
+		Description: fmt.Sprintf("%s | %s | %s", e.Date, e.Location, e.Category),
 		Enclosure:   &feeds.Enclosure{Url: e.Image, Type: "image/jpeg", Length: "0"},
 		Created:     time.Now(),
 		Updated:     time.Now(),
