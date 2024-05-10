@@ -2,12 +2,16 @@ package t4g
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ahobsonsayers/t4g-feed/utils"
 	"github.com/foolin/pagser"
 	"github.com/gorilla/feeds"
+	"github.com/samber/lo"
 )
 
 type T4G struct {
@@ -42,7 +46,7 @@ func (e Event) ToFeedItem() *feeds.Item {
 	return &feeds.Item{
 		Title:       e.Title,
 		Link:        &feeds.Link{Href: e.Link},
-		Description: strings.Join([]string{e.Date, e.Location, e.Category}, "\n"),
+		Description: fmt.Sprintf("%s\n%s\n%s", e.Date, e.Location, e.Category),
 		Enclosure:   &feeds.Enclosure{Url: e.Image, Type: "image/jpeg", Length: "0"},
 		Created:     time.Now(),
 		Updated:     time.Now(),
@@ -50,8 +54,16 @@ func (e Event) ToFeedItem() *feeds.Item {
 }
 
 func Events(ctx context.Context, location *string) ([]Event, error) {
+	eventPages, err := manyPageEvents(ctx, location, 5)
+	if err != nil {
+		return nil, err
+	}
+	return lo.Flatten(eventPages), nil
+}
+
+func pageEvents(ctx context.Context, input EventsInput) ([]Event, error) {
 	// Get events page
-	eventsPage, err := getEventsPage(ctx, location)
+	eventsPage, err := getEventsPage(ctx, input)
 	if err != nil {
 		return nil, err
 	}
@@ -70,4 +82,46 @@ func Events(ctx context.Context, location *string) ([]Event, error) {
 	}
 
 	return events, nil
+}
+
+func manyPageEvents(ctx context.Context, location *string, pages int) ([][]Event, error) {
+	if pages < 1 {
+		pages = 1
+	}
+
+	eventPages := make([][]Event, pages)
+	var errs error
+
+	var wg sync.WaitGroup
+	var eventsMutex sync.Mutex
+	var errsMutex sync.Mutex
+
+	// Get 5 pages of books. This should be enough
+	for idx := 0; idx < pages; idx++ {
+		wg.Add(1)
+
+		go func(idx int) {
+			defer wg.Done()
+
+			pageBooks, err := pageEvents(
+				ctx, EventsInput{
+					Location: location,
+					Page:     lo.ToPtr(idx + 1),
+				},
+			)
+			if err != nil {
+				errsMutex.Lock()
+				errs = errors.Join(errs, err)
+				errsMutex.Unlock()
+				return
+			}
+
+			eventsMutex.Lock()
+			eventPages[idx] = pageBooks
+			eventsMutex.Unlock()
+		}(idx)
+	}
+	wg.Wait()
+
+	return eventPages, errs
 }

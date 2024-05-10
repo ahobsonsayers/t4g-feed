@@ -17,7 +17,7 @@ func Feed(ctx context.Context, location *string) (*feeds.Feed, error) {
 	// Create feed
 	feed := &feeds.Feed{
 		Title:       "Tickets For Good Feed",
-		Link:        &feeds.Link{Href: LocationEventsUrl(location)},
+		Link:        &feeds.Link{Href: EventsUrl(EventsInput{Location: location})},
 		Description: "Tickets For Good events in London",
 		Updated:     time.Now(),
 	}
