@@ -1,0 +1,42 @@
+# Docs: https://taskfile.dev/#/usage
+version: "3"
+
+tasks:
+  lint:
+    cmds:
+      - golangci-lint run
+
+  format:
+    cmds:
+      - go fmt ./...
+
+  test:
+    cmds:
+      - |
+        go clean -testcache
+        go test ./...
+
+  gen:
+    cmds:
+      - go generate ./...
+
+  build:
+    cmds:
+      - go build -v -o bin/t4g-feed
+
+  build:docker:
+    cmds:
+      - docker build . -t arranhs/t4g-feed
+
+  run:
+    cmds:
+      - go run .
+
+  run:docker:
+    deps: [build:docker]
+    cmds:
+      - |
+        docker run --rm \
+          --name t4g-feed \
+          -p 5555:5555 \
+          arranhs/t4g-feed

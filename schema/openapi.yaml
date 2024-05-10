@@ -1,0 +1,39 @@
+openapi: 3.0.0
+info:
+  title: Tickets For Good Feed API
+  version: 1.0.0
+
+paths:
+  /t4g/{location}:
+    get:
+      operationId: t4g
+      summary: Get Tickets for Good Events RSS Feed
+      description: ""
+
+      parameters:
+        - name: location
+          in: path
+          schema:
+            type: string
+
+      responses:
+        "200":
+          description: RSS feed
+          content:
+            application/xml: {}
+        "400":
+          $ref: "#/components/responses/error"
+
+components:
+  responses:
+    error:
+      description: Error
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+            properties:
+              error:
+                type: string
