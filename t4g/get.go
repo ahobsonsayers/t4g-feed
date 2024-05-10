@@ -38,7 +38,7 @@ func EventsUrl(input EventsInput) string {
 	if input.Location != nil && *input.Location != "" {
 		queryParams.Set("location", *input.Location)
 	}
-	if input.Page != nil && *input.Page < 1 {
+	if input.Page != nil && *input.Page > 0 {
 		queryParams.Set("page", strconv.Itoa(*input.Page))
 	}
 	ticketsForGoodEventsUrl.RawQuery = queryParams.Encode()

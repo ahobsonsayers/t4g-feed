@@ -96,14 +96,13 @@ func manyPageEvents(ctx context.Context, location *string, pages int) ([][]Event
 	var eventsMutex sync.Mutex
 	var errsMutex sync.Mutex
 
-	// Get 5 pages of books. This should be enough
 	for idx := 0; idx < pages; idx++ {
 		wg.Add(1)
 
 		go func(idx int) {
 			defer wg.Done()
 
-			pageBooks, err := pageEvents(
+			pageEvents, err := pageEvents(
 				ctx, EventsInput{
 					Location: location,
 					Page:     lo.ToPtr(idx + 1),
@@ -117,7 +116,7 @@ func manyPageEvents(ctx context.Context, location *string, pages int) ([][]Event
 			}
 
 			eventsMutex.Lock()
-			eventPages[idx] = pageBooks
+			eventPages[idx] = pageEvents
 			eventsMutex.Unlock()
 		}(idx)
 	}
