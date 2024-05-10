@@ -5,5 +5,5 @@ services:
     build:
       context: .
     container_name: t4g-feed
-      - "6666:6666"
+      - "5656:5656"
     restart: unless-stopped
