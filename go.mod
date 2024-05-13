@@ -3,6 +3,7 @@ module github.com/ahobsonsayers/t4g-feed
 go 1.21
 
 require (
+	github.com/deckarep/golang-set/v2 v2.6.0
 	github.com/deepmap/oapi-codegen/v2 v2.1.0
 	github.com/foolin/pagser v0.1.6
 	github.com/getkin/kin-openapi v0.122.0

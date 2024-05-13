@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ahobsonsayers/t4g-feed/t4g"
+	"github.com/samber/lo"
 )
 
 type server struct{}
@@ -13,7 +14,7 @@ type server struct{}
 func NewServer() StrictServerInterface { return &server{} }
 
 func (*server) T4g(ctx context.Context, request T4gRequestObject) (T4gResponseObject, error) {
-	feed, err := t4g.FeedDebounce(ctx, &request.Location, 5*time.Minute)
+	feed, err := t4g.FetchFeed(ctx, &request.Location, lo.ToPtr(5*time.Minute))
 	if err != nil {
 		return T4g400JSONResponse{ErrorJSONResponse{Error: err.Error()}}, nil
 	}
