@@ -3,11 +3,12 @@ package t4g
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/gorilla/feeds"
 	"github.com/samber/lo"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 
 	mapset "github.com/deckarep/golang-set/v2"
 )
@@ -16,9 +17,10 @@ func NewFeed(location *string) *feeds.Feed {
 	feedTitle := "T4G Feed"
 	feedDescription := "Tickets For Good Events"
 	if location != nil {
-		titleLocation := strings.ToTitle(*location)
+		titleLocation := cases.Title(language.English).String(*location)
+
 		feedTitle = fmt.Sprintf("%s: %s", feedTitle, titleLocation)
-		feedDescription = fmt.Sprintf("%s in %s", feedTitle, strings.ToTitle(*location))
+		feedDescription = fmt.Sprintf("%s in %s", feedDescription, titleLocation)
 	}
 
 	return &feeds.Feed{
