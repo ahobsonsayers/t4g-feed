@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -14,11 +15,16 @@ import (
 	"github.com/samber/lo"
 )
 
+// eventIdRegex is a regex to match an event id in a
+// event link. Id is the first number in the link.
+var eventIdRegex = regexp.MustCompile(`\d+`)
+
 type T4G struct {
 	Events []Event `pagser:"[class*='event_card']"`
 }
 
 type Event struct {
+	Id       string `pagser:".card-body a->attr(href)"` // Id can be found in the link
 	Title    string `pagser:".card-title"`
 	Image    string `pagser:"img->attr(src)"`
 	Link     string `pagser:".card-body a->attr(href)"`
@@ -30,6 +36,8 @@ type Event struct {
 // sanitise will sanitise an event after being parsed from html
 func (e Event) sanitise() Event {
 	event := e
+
+	event.Id = eventIdRegex.FindString(e.Id)
 
 	event.Image = strings.ReplaceAll(e.Image, "thumb_", "")
 
@@ -44,12 +52,12 @@ func (e Event) sanitise() Event {
 
 func (e Event) ToFeedItem() *feeds.Item {
 	return &feeds.Item{
+		Id:          e.Id,
 		Title:       e.Title,
 		Link:        &feeds.Link{Href: e.Link},
 		Description: fmt.Sprintf("%s | %s | %s", e.Date, e.Location, e.Category),
 		Enclosure:   &feeds.Enclosure{Url: e.Image, Type: "image/jpeg", Length: "0"},
 		Created:     time.Now(),
-		Updated:     time.Now(),
 	}
 }
 

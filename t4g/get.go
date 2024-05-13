@@ -55,7 +55,7 @@ func getEventsPage(ctx context.Context, input EventsInput) (string, error) {
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 	defer response.Body.Close()
 
