@@ -87,7 +87,7 @@ func FetchFeed(ctx context.Context, location *string, debounceTime *time.Duratio
 	}
 
 	// Get events
-	events, err := Events(ctx, location)
+	events, err := Events(ctx, location, lo.ToPtr(5))
 	if err != nil {
 		return nil, err
 	}
