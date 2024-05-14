@@ -10,11 +10,11 @@ A great (and recommended) Android app to use this feed is [Feeder](https://play.
 
 You can use the feed (e.g. for London) by entering the following URL into your RSS app:
 
-https://ticketsforgood.co.uk/london
+`https://ticketsforgood.co.uk/london`
 
 You can also substitute **london** for any location in the UK, or even a postcode. It works like the normal location search on the Tickets For Good website:
 
-https://ticketsforgood.co.uk/<location>
+`https://ticketsforgood.co.uk/<location>`
 
 Notes:
 
