@@ -3,14 +3,13 @@ package t4g
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/feeds"
 	"github.com/samber/lo"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-
-	mapset "github.com/deckarep/golang-set/v2"
 )
 
 func NewFeed(location *string) *feeds.Feed {
@@ -30,32 +29,38 @@ func NewFeed(location *string) *feeds.Feed {
 	}
 }
 
-func AddEventsToFeed(feed *feeds.Feed, events []Event) *feeds.Feed {
-	feedItemIds := mapset.NewSetWithSize[string](len(feed.Items))
-	for _, feedItem := range feed.Items {
-		feedItemIds.Add(feedItem.Id)
+// AddNewEventsToFeed will add new events in the passed event to the feed
+func AddNewEventsToFeed(feed *feeds.Feed, events []Event) *feeds.Feed {
+	// Get latest event id in the feed as a number.
+	// If we fail to parse, latestEventId will be 0, meaning all passed
+	// events will be deemed newer and will be added to the feed.
+	var latestEventId int
+	if len(feed.Items) > 0 {
+		latestEventId, _ = strconv.Atoi(feed.Items[0].Id)
 	}
 
-	eventIds := mapset.NewSetWithSize[string](len(events))
+	// Get events newer than the latest event in the feed i.e. has a larger event id.
+	// If we fail to parse the event id, add event to feed regardless
+	newFeedItems := make([]*feeds.Item, 0, len(events))
 	for _, event := range events {
-		eventIds.Add(event.Id)
-	}
-
-	// Determine the added events (i.e. not already in the feed) and add them.
-	// Treat events without an id as added.
-	addedEventIds := eventIds.Difference(feedItemIds)
-	for _, event := range events {
-		if event.Id == "" || addedEventIds.Contains(event.Id) {
-			feed.Add(event.ToFeedItem())
+		eventId, err := strconv.Atoi(event.Id)
+		if eventId > latestEventId || err != nil {
+			newerFeedItem := event.ToFeedItem()
+			newFeedItems = append(newFeedItems, newerFeedItem)
 		}
 	}
 
-	// Only keep last 100 added items
-	if len(feed.Items) > 100 {
-		feed.Items = feed.Items[:100]
+	// Get updated feed items by concatenating new feed items and
+	// current feed items, only keeping the latest 100 items
+	updateFeedItems := make([]*feeds.Item, 0, len(newFeedItems)+len(feed.Items))
+	updateFeedItems = append(updateFeedItems, newFeedItems...)
+	updateFeedItems = append(updateFeedItems, feed.Items...)
+	if len(updateFeedItems) > 100 {
+		updateFeedItems = feed.Items[:100]
 	}
 
-	// Update feed updated time regardless of whether new items added
+	// Update feed, updating time regardless of whether new items added
+	feed.Items = updateFeedItems
 	feed.Updated = time.Now()
 
 	return feed
@@ -93,7 +98,7 @@ func FetchFeed(ctx context.Context, location *string, debounceTime *time.Duratio
 	}
 
 	// Add events to feed
-	AddEventsToFeed(feed, events)
+	AddNewEventsToFeed(feed, events)
 
 	return feed, nil
 }

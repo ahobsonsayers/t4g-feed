@@ -10,9 +10,9 @@ import (
 )
 
 func TestT4GEvents(t *testing.T) {
-	events, err := t4g.Events(context.Background(), nil)
+	events, err := t4g.Events(context.Background(), nil, nil)
 	require.NoError(t, err)
-	require.Len(t, events, 5*12)
+	require.Len(t, events, 12)
 
 	require.NotEmpty(t, events[0].Id)
 	require.NotEmpty(t, events[0].Title)
