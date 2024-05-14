@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ahobsonsayers/t4g-feed/utils"
+	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/foolin/pagser"
 	"github.com/gorilla/feeds"
 	"github.com/samber/lo"
@@ -61,12 +62,30 @@ func (e Event) ToFeedItem() *feeds.Item {
 	}
 }
 
-func Events(ctx context.Context, location *string) ([]Event, error) {
-	eventPages, err := manyPageEvents(ctx, location, 5)
+func Events(ctx context.Context, location *string, pages *int) ([]Event, error) {
+	eventPages, err := manyPageEvents(ctx, location, pages)
 	if err != nil {
 		return nil, err
 	}
-	return lo.Flatten(eventPages), nil
+
+	// Pages have a maximum of 12 items
+	maxEventCount := 12 * len(eventPages)
+
+	// Flatten and dedupe events
+	events := make([]Event, 0, maxEventCount)
+	seenEventIds := mapset.NewSetWithSize[string](maxEventCount)
+	for _, pageEvents := range eventPages {
+		for _, event := range pageEvents {
+			if seenEventIds.Contains(event.Id) {
+				continue
+			}
+
+			events = append(events, event)
+			seenEventIds.Add(event.Id)
+		}
+	}
+
+	return events, nil
 }
 
 func pageEvents(ctx context.Context, input EventsInput) ([]Event, error) {
@@ -92,7 +111,8 @@ func pageEvents(ctx context.Context, input EventsInput) ([]Event, error) {
 	return events, nil
 }
 
-func manyPageEvents(ctx context.Context, location *string, pages int) ([][]Event, error) {
+func manyPageEvents(ctx context.Context, location *string, numPages *int) ([][]Event, error) {
+	pages := lo.FromPtr(numPages)
 	if pages < 1 {
 		pages = 1
 	}
