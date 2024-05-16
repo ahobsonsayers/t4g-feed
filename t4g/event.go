@@ -4,28 +4,23 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/ahobsonsayers/t4g-feed/utils"
 	mapset "github.com/deckarep/golang-set/v2"
-	"github.com/foolin/pagser"
 	"github.com/gorilla/feeds"
 	"github.com/samber/lo"
 )
-
-// eventIdRegex is a regex to match an event id in a
-// event link. Id is the first number in the link.
-var eventIdRegex = regexp.MustCompile(`\d+`)
 
 type T4G struct {
 	Events []Event `pagser:"[class*='event_card']"`
 }
 
 type Event struct {
-	Id       string `pagser:".card-body a->attr(href)"` // Id can be found in the link
+	Id       int    `pagser:".card-body a->attrNumbers(href)"` // Id can be found in the link
 	Title    string `pagser:".card-title"`
 	Image    string `pagser:"img->attr(src)"`
 	Link     string `pagser:".card-body a->attr(href)"`
@@ -37,8 +32,6 @@ type Event struct {
 // sanitise will sanitise an event after being parsed from html
 func (e Event) sanitise() Event {
 	event := e
-
-	event.Id = eventIdRegex.FindString(e.Id)
 
 	event.Image = strings.ReplaceAll(e.Image, "thumb_", "")
 
@@ -53,7 +46,7 @@ func (e Event) sanitise() Event {
 
 func (e Event) ToFeedItem() *feeds.Item {
 	return &feeds.Item{
-		Id:          e.Id,
+		Id:          lo.Ternary(e.Id == 0, "", strconv.Itoa(e.Id)),
 		Title:       e.Title,
 		Link:        &feeds.Link{Href: e.Link},
 		Description: fmt.Sprintf("%s | %s | %s", e.Date, e.Location, e.Category),
@@ -73,10 +66,10 @@ func Events(ctx context.Context, location *string, pages *int) ([]Event, error) 
 
 	// Flatten and dedupe events
 	events := make([]Event, 0, maxEventCount)
-	seenEventIds := mapset.NewSetWithSize[string](maxEventCount)
+	seenEventIds := mapset.NewSetWithSize[int](maxEventCount)
 	for _, pageEvents := range eventPages {
 		for _, event := range pageEvents {
-			if seenEventIds.Contains(event.Id) {
+			if event.Id != 0 && seenEventIds.Contains(event.Id) {
 				continue
 			}
 
@@ -97,7 +90,7 @@ func pageEvents(ctx context.Context, input EventsInput) ([]Event, error) {
 
 	// Parse t4g
 	var t4g T4G
-	err = pagser.New().Parse(&t4g, eventsPage)
+	err = NewHTMLParser().Parse(&t4g, eventsPage)
 	if err != nil {
 		return nil, err
 	}

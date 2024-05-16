@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/gorilla/feeds"
 	"github.com/samber/lo"
 	"golang.org/x/text/cases"
@@ -29,38 +30,51 @@ func NewFeed(location *string) *feeds.Feed {
 	}
 }
 
-// AddNewEventsToFeed will add new events in the passed event to the feed
+// AddNewEventsToFeed will add new events in the passed events to the feed
 func AddNewEventsToFeed(feed *feeds.Feed, events []Event) *feeds.Feed {
-	// Get latest event id in the feed as a number.
-	// If we fail to parse, latestEventId will be 0, meaning all passed
-	// events will be deemed newer and will be added to the feed.
-	var latestEventId int
-	if len(feed.Items) > 0 {
-		latestEventId, _ = strconv.Atoi(feed.Items[0].Id)
+	// We only want to add events that do not already exist.
+	// - Generally new events will have a larger id than the largest id in the feed.
+	// - Sometimes new events are inserted in the middle, and do not have a larger id.
+	// - If an event is removed, older events might sneak in at the end. These are not new and should not be included!
+	// Therefore we will include all new events, with id LARGER than the earliest id in the feed.
+
+	feedIds := mapset.NewSetWithSize[int](len(feed.Items))
+	var minFeedId int
+	for _, item := range feed.Items {
+		feedId, err := strconv.Atoi(item.Id)
+		if err == nil {
+			feedIds.Add(feedId)
+			if feedId < minFeedId {
+				minFeedId = feedId
+			}
+		}
 	}
 
-	// Get events newer than the latest event in the feed i.e. has a larger event id.
-	// If we fail to parse the event id, add event to feed regardless
+	eventIds := mapset.NewSetWithSize[int](len(events))
+	for _, event := range events {
+		eventIds.Add(event.Id)
+	}
+
+	newEventIds := eventIds.Difference(feedIds)
+
 	newFeedItems := make([]*feeds.Item, 0, len(events))
 	for _, event := range events {
-		eventId, err := strconv.Atoi(event.Id)
-		if eventId > latestEventId || err != nil {
-			newerFeedItem := event.ToFeedItem()
-			newFeedItems = append(newFeedItems, newerFeedItem)
+		if event.Id == 0 || (newEventIds.Contains(event.Id) && event.Id > minFeedId) {
+			newFeedItems = append(newFeedItems, event.ToFeedItem())
 		}
 	}
 
 	// Get updated feed items by concatenating new feed items and
 	// current feed items, only keeping the latest 100 items
-	updateFeedItems := make([]*feeds.Item, 0, len(newFeedItems)+len(feed.Items))
-	updateFeedItems = append(updateFeedItems, newFeedItems...)
-	updateFeedItems = append(updateFeedItems, feed.Items...)
-	if len(updateFeedItems) > 100 {
-		updateFeedItems = feed.Items[:100]
+	updatedFeedItems := make([]*feeds.Item, 0, len(newFeedItems)+len(feed.Items))
+	updatedFeedItems = append(updatedFeedItems, newFeedItems...)
+	updatedFeedItems = append(updatedFeedItems, feed.Items...)
+	if len(updatedFeedItems) > 100 {
+		updatedFeedItems = feed.Items[:100]
 	}
 
 	// Update feed, updating time regardless of whether new items added
-	feed.Items = updateFeedItems
+	feed.Items = updatedFeedItems
 	feed.Updated = time.Now()
 
 	return feed
