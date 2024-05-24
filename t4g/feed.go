@@ -32,49 +32,33 @@ func NewFeed(location *string) *feeds.Feed {
 
 // AddNewEventsToFeed will add new events in the passed events to the feed
 func AddNewEventsToFeed(feed *feeds.Feed, events []Event) *feeds.Feed {
-	// We only want to add events that do not already exist.
-	// - Generally new events will have a larger id than the largest id in the feed.
-	// - Sometimes new events are inserted in the middle, and do not have a larger id.
-	// - If an event is removed, older events might sneak in at the end. These are not new and should not be included!
-	// Therefore we will include all new events, with id LARGER than the earliest id in the feed.
-
+	// Get feed ids, ignoring ones that cannot be converted to a number
+	// Items without a number will be sorted to the end and eventually removed
 	feedIds := mapset.NewSetWithSize[int](len(feed.Items))
-	var minFeedId int
 	for _, item := range feed.Items {
 		feedId, err := strconv.Atoi(item.Id)
 		if err == nil {
 			feedIds.Add(feedId)
-			if feedId < minFeedId {
-				minFeedId = feedId
-			}
 		}
 	}
 
-	eventIds := mapset.NewSetWithSize[int](len(events))
+	// Add events to feed that do not already exist
 	for _, event := range events {
-		eventIds.Add(event.Id)
-	}
-
-	newEventIds := eventIds.Difference(feedIds)
-
-	newFeedItems := make([]*feeds.Item, 0, len(events))
-	for _, event := range events {
-		if event.Id == 0 || (newEventIds.Contains(event.Id) && event.Id > minFeedId) {
-			newFeedItems = append(newFeedItems, event.ToFeedItem())
+		if !feedIds.Contains(event.Id) {
+			eventItem := event.ToFeedItem()
+			feed.Add(eventItem)
 		}
 	}
 
-	// Get updated feed items by concatenating new feed items and
-	// current feed items, only keeping the latest 100 items
-	updatedFeedItems := make([]*feeds.Item, 0, len(newFeedItems)+len(feed.Items))
-	updatedFeedItems = append(updatedFeedItems, newFeedItems...)
-	updatedFeedItems = append(updatedFeedItems, feed.Items...)
-	if len(updatedFeedItems) > 100 {
-		updatedFeedItems = feed.Items[:100]
+	// Sort feed items
+	feed.Sort(feedSortFunc)
+
+	// Keep length of feed to 60 items (5 pages of 12 events)
+	if len(feed.Items) > 60 {
+		feed.Items = feed.Items[:60]
 	}
 
-	// Update feed, updating time regardless of whether new items added
-	feed.Items = updatedFeedItems
+	// Update the updated time
 	feed.Updated = time.Now()
 
 	return feed
@@ -115,4 +99,18 @@ func FetchFeed(ctx context.Context, location *string, debounceTime *time.Duratio
 	AddNewEventsToFeed(feed, events)
 
 	return feed, nil
+}
+
+func feedSortFunc(item1, item2 *feeds.Item) bool {
+	feedId1, err := strconv.Atoi(item1.Id)
+	if err == nil {
+		feedId1 = -1
+	}
+
+	feedId2, err := strconv.Atoi(item1.Id)
+	if err == nil {
+		feedId2 = -1
+	}
+
+	return feedId1 < feedId2
 }
