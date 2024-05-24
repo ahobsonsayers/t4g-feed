@@ -3,24 +3,22 @@ package t4g
 import (
 	"sync"
 	"time"
-
-	"github.com/gorilla/feeds"
 )
 
 var (
-	cachedFeeds      = map[string]*feeds.Feed{} // Location -> feed
+	cachedFeeds      = map[string]*Feed{} // Location -> feed
 	cachedFeedsMutex sync.Mutex
 )
 
-func deleteOldestCachedFeed(cachedFeeds map[string]*feeds.Feed) {
+func deleteOldestCachedFeed(cachedFeeds map[string]*Feed) {
 	oldestTime := time.Now()
 
 	// Find the oldest cached feed
 	var oldestKey string
 	for key, cachedFeed := range cachedFeeds {
-		if cachedFeed.Updated.Before(oldestTime) {
+		if cachedFeed.UpdatedAt().Before(oldestTime) {
 			oldestKey = key
-			oldestTime = cachedFeed.Updated
+			oldestTime = cachedFeed.UpdatedAt()
 		}
 	}
 

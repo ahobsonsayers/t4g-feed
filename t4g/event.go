@@ -3,15 +3,11 @@ package t4g
 import (
 	"context"
 	"errors"
-	"fmt"
-	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/ahobsonsayers/t4g-feed/utils"
 	mapset "github.com/deckarep/golang-set/v2"
-	"github.com/gorilla/feeds"
 	"github.com/samber/lo"
 )
 
@@ -42,17 +38,6 @@ func (e Event) sanitise() Event {
 	event.Date = strings.ReplaceAll(e.Date, "\n", " ")
 
 	return event
-}
-
-func (e Event) ToFeedItem() *feeds.Item {
-	return &feeds.Item{
-		Id:          lo.Ternary(e.Id == 0, "", strconv.Itoa(e.Id)),
-		Title:       e.Title,
-		Link:        &feeds.Link{Href: e.Link},
-		Description: fmt.Sprintf("%s | %s | %s", e.Date, e.Location, e.Category),
-		Enclosure:   &feeds.Enclosure{Url: e.Image, Type: "image/jpeg", Length: "0"},
-		Created:     time.Now(),
-	}
 }
 
 func Events(ctx context.Context, location *string, pages *int) ([]Event, error) {
