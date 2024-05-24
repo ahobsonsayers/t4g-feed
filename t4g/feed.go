@@ -107,7 +107,7 @@ func feedSortFunc(item1, item2 *feeds.Item) bool {
 		feedId1 = -1
 	}
 
-	feedId2, err := strconv.Atoi(item1.Id)
+	feedId2, err := strconv.Atoi(item2.Id)
 	if err == nil {
 		feedId2 = -1
 	}
