@@ -1,9 +1,8 @@
-version: "3.8"
 services:
-  t4g-feed:
+  t4g:
     image: arranhs/t4g-feed
+    restart: unless-stopped
     build:
       context: .
-    container_name: t4g-feed
-      - "5656:5656"
-    restart: unless-stopped
+    networks:
+      - 5656:5656
