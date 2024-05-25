@@ -42,16 +42,24 @@ func (f *Feed) Update(ctx context.Context) error {
 	// Get current feed ids, ignoring ones that cannot be converted to a number
 	// Items without a number will be sorted to the end and eventually removed
 	feedIds := mapset.NewSetWithSize[int](len(f.feed.Items))
+	var minFeedId int
 	for _, item := range f.feed.Items {
 		feedId, err := strconv.Atoi(item.Id)
-		if err == nil {
-			feedIds.Add(feedId)
+		if err != nil {
+	    continue
+		}
+		feedIds.Add(feedId)
+		if minFeedId == 0 || feedId < minFeedId {
+		  minFeedId = feedId
 		}
 	}
 
 	// Add events to feed that do not already exist
+	// and are larger than the current min feed id as
+	// sometimes events are removed and older events
+	// creep back in.
 	for _, event := range events {
-		if !feedIds.Contains(event.Id) {
+		if !feedIds.Contains(event.Id) && event.Id > minFeedId {
 			feedItem := eventToFeedItem(event)
 			f.feed.Add(feedItem)
 		}

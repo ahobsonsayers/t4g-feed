@@ -4,5 +4,5 @@ services:
     restart: unless-stopped
     build:
       context: .
-    networks:
+    ports:
       - 5656:5656
