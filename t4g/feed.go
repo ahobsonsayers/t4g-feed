@@ -46,11 +46,11 @@ func (f *Feed) Update(ctx context.Context) error {
 	for _, item := range f.feed.Items {
 		feedId, err := strconv.Atoi(item.Id)
 		if err != nil {
-	    continue
+			continue
 		}
 		feedIds.Add(feedId)
 		if minFeedId == 0 || feedId < minFeedId {
-		  minFeedId = feedId
+			minFeedId = feedId
 		}
 	}
 
