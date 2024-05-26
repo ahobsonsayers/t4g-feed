@@ -35,6 +35,7 @@ func EventsUrl(input EventsInput) string {
 	// Set query params
 	queryParams := ticketsForGoodEventsUrl.Query()
 	queryParams.Set("sort", "newest")
+	queryParams.Set("range", "30")
 	if input.Location != nil && *input.Location != "" {
 		queryParams.Set("location", *input.Location)
 	}
