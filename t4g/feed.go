@@ -16,8 +16,8 @@ import (
 )
 
 const (
-  initialNumEventPages = 5 
-  maxFeedItems = 6 * EventsPerPage
+  initialNumEventPages = 5 // 60 inital feed items
+  maxFeedItems = 6 * EventsPerPage // 72 max feed items
 )
 
 type Feed struct {
