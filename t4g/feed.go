@@ -16,8 +16,8 @@ import (
 )
 
 const (
-  initialNumEventPages = 5 // 60 inital feed items
-  maxFeedItems = 6 * EventsPerPage // 72 max feed items
+	initialNumEventPages = 5                 // 60 initial feed items
+	maxFeedItems         = 6 * EventsPerPage // 72 max feed items
 )
 
 type Feed struct {
@@ -49,11 +49,11 @@ func (f *Feed) Update(ctx context.Context) error {
 	for _, item := range f.feed.Items {
 		feedId, err := strconv.Atoi(item.Id)
 		if err != nil {
-	    continue
+			continue
 		}
 		feedIds.Add(feedId)
 		if minFeedId == 0 || feedId < minFeedId {
-		  minFeedId = feedId
+			minFeedId = feedId
 		}
 	}
 
