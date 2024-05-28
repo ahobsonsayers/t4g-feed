@@ -15,7 +15,10 @@ import (
 	mapset "github.com/deckarep/golang-set/v2"
 )
 
-const maxFeedItems = 60
+const (
+  initialNumEventPages = 5 
+  maxFeedItems = 6 * EventsPerPage
+)
 
 type Feed struct {
 	location *string
@@ -34,7 +37,7 @@ func (f *Feed) Update(ctx context.Context) error {
 	defer f.mutex.Unlock()
 
 	// Get events
-	events, err := Events(ctx, f.location, lo.ToPtr(5))
+	events, err := Events(ctx, f.location, lo.ToPtr(initialNumEventPages))
 	if err != nil {
 		return err
 	}
@@ -46,11 +49,11 @@ func (f *Feed) Update(ctx context.Context) error {
 	for _, item := range f.feed.Items {
 		feedId, err := strconv.Atoi(item.Id)
 		if err != nil {
-			continue
+	    continue
 		}
 		feedIds.Add(feedId)
 		if minFeedId == 0 || feedId < minFeedId {
-			minFeedId = feedId
+		  minFeedId = feedId
 		}
 	}
 
@@ -68,7 +71,7 @@ func (f *Feed) Update(ctx context.Context) error {
 	// Sort feed items
 	f.feed.Sort(feedSortFunc)
 
-	// Keep length of feed to 60 items (5 pages of 12 events)
+	// Keep length of feed to maximum number of items
 	if len(f.feed.Items) > maxFeedItems {
 		f.feed.Items = f.feed.Items[:maxFeedItems]
 	}

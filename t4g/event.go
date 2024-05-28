@@ -11,6 +11,8 @@ import (
 	"github.com/samber/lo"
 )
 
+const EventsPerPage = 12
+
 type T4G struct {
 	Events []Event `pagser:"[class*='event_card']"`
 }
