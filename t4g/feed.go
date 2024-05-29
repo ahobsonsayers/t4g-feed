@@ -15,13 +15,9 @@ import (
 	mapset "github.com/deckarep/golang-set/v2"
 )
 
-const (
-	initialNumEventPages = 5                 // 60 initial feed items
-	maxFeedItems         = 6 * EventsPerPage // 72 max feed items
-)
-
 type Feed struct {
 	location *string
+	maxItems int
 	feed     *feeds.Feed
 	mutex    sync.Mutex
 }
@@ -32,12 +28,12 @@ func (f *Feed) UpdatedAt() time.Time {
 	return f.feed.Updated
 }
 
-func (f *Feed) Update(ctx context.Context) error {
+func (f *Feed) Update(ctx context.Context, numEventPages int) error {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
 	// Get events
-	events, err := Events(ctx, f.location, lo.ToPtr(initialNumEventPages))
+	events, err := Events(ctx, f.location, lo.ToPtr(numEventPages))
 	if err != nil {
 		return err
 	}
@@ -72,8 +68,8 @@ func (f *Feed) Update(ctx context.Context) error {
 	f.feed.Sort(feedSortFunc)
 
 	// Keep length of feed to maximum number of items
-	if len(f.feed.Items) > maxFeedItems {
-		f.feed.Items = f.feed.Items[:maxFeedItems]
+	if len(f.feed.Items) > f.maxItems {
+		f.feed.Items = f.feed.Items[:f.maxItems]
 	}
 
 	// Update the updated time
@@ -88,7 +84,7 @@ func (f *Feed) ToRss() (string, error) {
 	return f.feed.ToRss()
 }
 
-func NewFeed(location *string) *Feed {
+func NewFeed(location *string, maxSize *int) *Feed {
 	feedTitle := "T4G Feed"
 	feedDescription := "Tickets For Good Events"
 	if location != nil {
@@ -98,58 +94,19 @@ func NewFeed(location *string) *Feed {
 		feedDescription = fmt.Sprintf("%s in %s", feedDescription, titleLocation)
 	}
 
+	maxFeedItems := 100
+	if maxSize != nil {
+		maxFeedItems = *maxSize
+	}
+
 	return &Feed{
 		location: location,
+		maxItems: maxFeedItems,
 		feed: &feeds.Feed{
 			Title:       feedTitle,
 			Link:        &feeds.Link{Href: EventsUrl(EventsInput{Location: location})},
 			Description: feedDescription,
 		},
-	}
-}
-
-// FetchFeed will fetch a Tickets For Good events feed for a location.
-// If debounce time is set and the time period has not passed since the time the
-// feed was last updated and the function call, a cached feed will be returned.
-// If the time period has pass, the feed will be fully retched.
-func FetchFeed(ctx context.Context, location *string, debounceTime *time.Duration) (*Feed, error) {
-	cachedFeedsMutex.Lock()
-	defer cachedFeedsMutex.Unlock()
-
-	// Get cached feed. If there is no cached feed, create a new one.
-	// Only keep the 10 most recently updated feeds
-	feed, isCached := cachedFeeds[lo.FromPtr(location)]
-	if !isCached {
-		feed = NewFeed(location)
-		cachedFeeds[lo.FromPtr(location)] = feed
-
-		if len(cachedFeeds) > 10 {
-			deleteOldestCachedFeed(cachedFeeds)
-		}
-	}
-
-	// If there is a debounce and we are within the debounce period, return the cached feed
-	if debounceTime != nil && time.Since(feed.UpdatedAt()) < *debounceTime {
-		return feed, nil
-	}
-
-	// Update feed
-	err := feed.Update(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return feed, nil
-}
-
-func eventToFeedItem(event Event) *feeds.Item {
-	return &feeds.Item{
-		Id:          lo.Ternary(event.Id == 0, "", strconv.Itoa(event.Id)),
-		Title:       event.Title,
-		Link:        &feeds.Link{Href: event.Link},
-		Description: fmt.Sprintf("%s | %s | %s", event.Date, event.Location, event.Category),
-		Enclosure:   &feeds.Enclosure{Url: event.Image, Type: "image/jpeg", Length: "0"},
-		Created:     time.Now(),
 	}
 }
 
