@@ -112,12 +112,12 @@ func NewFeed(location *string, maxSize *int) *Feed {
 
 func feedSortFunc(item1, item2 *feeds.Item) bool {
 	feedId1, err := strconv.Atoi(item1.Id)
-	if err == nil {
+	if err != nil {
 		feedId1 = -1
 	}
 
 	feedId2, err := strconv.Atoi(item2.Id)
-	if err == nil {
+	if err != nil {
 		feedId2 = -1
 	}
 
