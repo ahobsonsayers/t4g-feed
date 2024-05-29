@@ -121,5 +121,5 @@ func feedSortFunc(item1, item2 *feeds.Item) bool {
 		feedId2 = -1
 	}
 
-	return feedId1 < feedId2
+	return feedId1 > feedId2
 }
